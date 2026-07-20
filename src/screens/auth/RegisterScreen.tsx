@@ -13,13 +13,30 @@ import {
 } from 'react-native';
 import api from '../../api/axios';
 
+const CATEGORIES = [
+  { id: 1, name: '🐟 Fish' },
+  { id: 2, name: '🥦 Vegetables' },
+  { id: 3, name: '🍞 Bakery' },
+  { id: 4, name: '🍦 Ice Cream' },
+  { id: 5, name: '🗑️ Garbage' },
+];
+
 export default function RegisterScreen({ navigation }: any): React.JSX.Element {
+  const [role, setRole] = useState<'user' | 'vendor'>('user');
+  const [loading, setLoading] = useState(false);
+
+  // Common fields
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
-  const [role, setRole] = useState<'user' | 'vendor'>('user');
-  const [loading, setLoading] = useState(false);
+
+  // Vendor fields
+  const [businessName, setBusinessName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [vehicleNumber, setVehicleNumber] = useState('');
+  const [categoryId, setCategoryId] = useState<number | null>(null);
+  const [description, setDescription] = useState('');
 
   const handleRegister = async () => {
     if (!name || !email || !password || !passwordConfirm) {
@@ -30,6 +47,11 @@ export default function RegisterScreen({ navigation }: any): React.JSX.Element {
       Alert.alert('Error', 'Passwords do not match');
       return;
     }
+    if (role === 'vendor' && (!businessName || !phone || !vehicleNumber || !categoryId)) {
+      Alert.alert('Error', 'Please fill in all vendor fields');
+      return;
+    }
+
     setLoading(true);
     try {
       await api.post('/register', {
@@ -38,6 +60,13 @@ export default function RegisterScreen({ navigation }: any): React.JSX.Element {
         password,
         password_confirmation: passwordConfirm,
         role,
+        ...(role === 'vendor' && {
+          business_name: businessName,
+          phone,
+          vehicle_number: vehicleNumber,
+          category_id: categoryId,
+          description,
+        }),
       });
       navigation.navigate('Otp', { email });
     } catch (error: any) {
@@ -59,7 +88,6 @@ export default function RegisterScreen({ navigation }: any): React.JSX.Element {
           <Text style={styles.subtitle}>Join the MaaS platform</Text>
         </View>
 
-        {/* Form */}
         <View style={styles.form}>
 
           {/* Role Selector */}
@@ -80,6 +108,9 @@ export default function RegisterScreen({ navigation }: any): React.JSX.Element {
               </Text>
             </TouchableOpacity>
           </View>
+
+          {/* ── Common Fields ── */}
+          <Text style={styles.sectionTitle}>Personal Information</Text>
 
           <Text style={styles.label}>Full Name</Text>
           <TextInput
@@ -102,7 +133,7 @@ export default function RegisterScreen({ navigation }: any): React.JSX.Element {
           <Text style={styles.label}>Password</Text>
           <TextInput
             style={styles.input}
-            placeholder="Enter your password"
+            placeholder="Minimum 8 characters"
             value={password}
             onChangeText={setPassword}
             secureTextEntry
@@ -117,6 +148,70 @@ export default function RegisterScreen({ navigation }: any): React.JSX.Element {
             secureTextEntry
           />
 
+          {/* ── Vendor Fields ── */}
+          {role === 'vendor' && (
+            <>
+              <Text style={styles.sectionTitle}>Business Information</Text>
+
+              <Text style={styles.label}>Business Name</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your business name"
+                value={businessName}
+                onChangeText={setBusinessName}
+              />
+
+              <Text style={styles.label}>Phone Number</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your phone number"
+                value={phone}
+                onChangeText={setPhone}
+                keyboardType="phone-pad"
+              />
+
+              <Text style={styles.label}>Vehicle Number</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your vehicle number"
+                value={vehicleNumber}
+                onChangeText={setVehicleNumber}
+                autoCapitalize="characters"
+              />
+
+              <Text style={styles.label}>Category</Text>
+              <View style={styles.categoryContainer}>
+                {CATEGORIES.map((cat) => (
+                  <TouchableOpacity
+                    key={cat.id}
+                    style={[
+                      styles.categoryButton,
+                      categoryId === cat.id && styles.categoryActive,
+                    ]}
+                    onPress={() => setCategoryId(cat.id)}>
+                    <Text style={[
+                      styles.categoryText,
+                      categoryId === cat.id && styles.categoryTextActive,
+                    ]}>
+                      {cat.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <Text style={styles.label}>Description (Optional)</Text>
+              <TextInput
+                style={[styles.input, styles.textarea]}
+                placeholder="Describe your business..."
+                value={description}
+                onChangeText={setDescription}
+                multiline
+                numberOfLines={3}
+              />
+            </>
+          )}
+
+          {/* Submit Button */}
           <TouchableOpacity
             style={styles.button}
             onPress={handleRegister}
@@ -124,7 +219,9 @@ export default function RegisterScreen({ navigation }: any): React.JSX.Element {
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.buttonText}>Register</Text>
+              <Text style={styles.buttonText}>
+                {role === 'vendor' ? 'Register as Vendor' : 'Register as Customer'}
+              </Text>
             )}
           </TouchableOpacity>
 
@@ -150,8 +247,8 @@ const styles = StyleSheet.create({
   },
   scroll: {
     flexGrow: 1,
-    justifyContent: 'center',
     padding: 24,
+    paddingTop: 48,
   },
   header: {
     alignItems: 'center',
@@ -180,6 +277,17 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 4,
+    marginBottom: 32,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#064E3B',
+    marginTop: 24,
+    marginBottom: 8,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
   },
   label: {
     fontSize: 14,
@@ -196,6 +304,10 @@ const styles = StyleSheet.create({
     padding: 14,
     fontSize: 16,
     color: '#111827',
+  },
+  textarea: {
+    height: 80,
+    textAlignVertical: 'top',
   },
   roleContainer: {
     flexDirection: 'row',
@@ -220,6 +332,31 @@ const styles = StyleSheet.create({
     color: '#6B7280',
   },
   roleTextActive: {
+    color: '#059669',
+  },
+  categoryContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  categoryButton: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
+    backgroundColor: '#F9FAFB',
+  },
+  categoryActive: {
+    borderColor: '#059669',
+    backgroundColor: '#ECFDF5',
+  },
+  categoryText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  categoryTextActive: {
     color: '#059669',
   },
   button: {
