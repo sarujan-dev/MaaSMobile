@@ -14,7 +14,7 @@ const Stack = createNativeStackNavigator();
 
 export default function AppNavigator(): React.JSX.Element {
   const [loading, setLoading] = useState(true);
-  const [userRole, setUserRole] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string | null>('user');
 
   useEffect(() => {
     checkAuth();
