@@ -7,6 +7,7 @@ import UserHomeScreen from '../screens/user/UserHomeScreen';
 import OrderHistoryScreen from '../screens/user/OrderHistoryScreen';
 import UserProfileScreen from '../screens/user/UserProfileScreen';
 import VendorProductsScreen from '../screens/user/VendorProductsScreen';
+import CheckoutScreen from '../screens/user/CheckoutScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -43,6 +44,7 @@ export default function UserNavigator(): React.JSX.Element {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="HomeTabs" component={HomeTabs} />
       <Stack.Screen name="VendorProducts" component={VendorProductsScreen} />
+      <Stack.Screen name="Checkout" component={CheckoutScreen} />
     </Stack.Navigator>
   );
 }
